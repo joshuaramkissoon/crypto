@@ -1,0 +1,1 @@
+SOCKET_BASE = 'wss://stream.binance.com:9443'
