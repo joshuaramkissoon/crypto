@@ -8,7 +8,7 @@ from order import OrderExecutor
 
 
 config_path = 'config-local.yaml'
-is_live_account = False
+is_live_account = True
 env = Environment(config_path, is_live=is_live_account)
 
 api_key = env.get_variable('api')
@@ -28,9 +28,9 @@ client = Client(api_key, secert_key, testnet = not is_live_account)
 exec = OrderExecutor(client)
 symbol = 'ETHUSDT'
 prec, min_notional = exec.prepare_order(symbol)
-# exec.create_order(
-#     SIDE_BUY,
-#     'min',
-#     'ETHGBP',
-#     lot_step=prec
-# )
+exec.create_order(
+    SIDE_SELL,
+    'min',
+    'ETHGBP',
+    lot_step=prec
+)
