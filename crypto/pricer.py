@@ -22,8 +22,7 @@ class PriceStream:
         socket = self.__make_socket_uri(base_asset, quote_asset, interval)
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
     
-    def run(self, f):
-        self.strategy = f
+    def run(self):
         self.ws.run_forever()
     
     def on_open(ws):
