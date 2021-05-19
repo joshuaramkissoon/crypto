@@ -9,7 +9,7 @@ class PriceStream:
     to the current candlestick every second.
     '''
 
-    def __init__(self, asset, ref_asset='usdt', interval='1m'):
+    def __init__(self, base_asset, quote_asset='usdt', interval='1m'):
         '''
         Initialize a price stream for an asset pair.
         Parameters
@@ -18,7 +18,7 @@ class PriceStream:
         ref_asset: String, ticker for reference asset (defaults to USDT)
         interval: String, interval for candlestick (minute (m), hour (h), day (d)). Defaults to 1 minute
         '''
-        socket = self.__make_socket_uri(asset, ref_asset, interval)
+        socket = self.__make_socket_uri(base_asset, quote_asset, interval)
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
     
     def run(self):
@@ -37,6 +37,6 @@ class PriceStream:
         c = data['c']
         print('Open: {} Close: {}'.format(o,c))
 
-    def __make_socket_uri(self, asset, ref_asset, interval):
-        symbol = asset.lower() + ref_asset.lower()
+    def __make_socket_uri(self, base_asset, quote_asset, interval):
+        symbol = base_asset.lower() + quote_asset.lower()
         return SOCKET_BASE + '/ws/{}@kline_{}'.format(symbol, interval)
