@@ -1,5 +1,5 @@
 from binance.enums import *
-from constants import AssetFilter
+from crypto.constants import AssetFilter
 import numpy as np
 from pprint import pprint
 
