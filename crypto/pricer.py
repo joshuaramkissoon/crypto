@@ -22,7 +22,8 @@ class PriceStream:
         socket = self.__make_socket_uri(base_asset, quote_asset, interval)
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
     
-    def run(self):
+    def run(self, f):
+        self.strategy = f
         self.ws.run_forever()
     
     def on_open(ws):
@@ -36,7 +37,19 @@ class PriceStream:
         data = json_message['k']
         o = data['o']
         c = data['c']
-        print('Open: {} Close: {}'.format(o,c))
+        # print('Open: {} Close: {}'.format(o,c))
+        PriceStream.handle_tick(o, c)
+
+    def handle_tick(open, close):
+        '''
+        Implement a trading strategy here. Function params can be changed and these changed should 
+        be reflected in the on_message function body.
+        '''
+        print(open, close)
+        if open > close:
+            print('Sell')
+        else:
+            print('Buy')
 
     def __make_socket_uri(self, base_asset, quote_asset, interval):
         symbol = base_asset.lower() + quote_asset.lower()
