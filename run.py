@@ -17,3 +17,7 @@ client = Client(api_key, secert_key, testnet = not is_live_account)
 account = Account(client)
 balances = account.get_portfolio()
 pprint(balances)
+
+stream = PriceStream('ETH')
+# Change PriceStream handle_tick method to implement strategy
+stream.run()

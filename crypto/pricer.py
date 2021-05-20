@@ -3,6 +3,7 @@ import json
 from crypto.constants import SOCKET_BASE
 import concurrent.futures
 from pprint import pprint
+import logging
 
 class PriceStream:
     '''
@@ -15,8 +16,8 @@ class PriceStream:
         Initialize a price stream for an asset pair.
         Parameters
         ----------
-        asset: String, ticker for asset
-        ref_asset: String, ticker for reference asset (defaults to USDT)
+        base_asset: String, ticker for asset
+        quote_asset: String, ticker for reference asset (defaults to USDT)
         interval: String, interval for candlestick (minute (m), hour (h), day (d)). Defaults to 1 minute
         '''
         socket = self.__make_socket_uri(base_asset, quote_asset, interval)
@@ -26,12 +27,13 @@ class PriceStream:
         self.ws.run_forever()
     
     def on_open(ws):
-        print('Connection opened')
+        logging.info('PriceStream connection opened')
 
     def on_close(ws):
-        print('Connection closed')
+        logging.info('PriceStream connection closed')
 
     def on_message(ws, message):
+        logging.info('Tick received')
         json_message = json.loads(message)
         data = json_message['k']
         o = data['o']
