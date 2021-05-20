@@ -1,0 +1,7 @@
+binance-test:
+  api-key: YOUR_API_TEST_KEY (OPTIONAL)
+  secret-key: YOUR_SECRET_TEST_KEY (OPTIONAL)
+
+binance-live:
+  api-key: YOUR_API_KEY
+  secret-key: YOUR_SECRET_KEY
