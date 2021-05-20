@@ -11,7 +11,7 @@ class PriceStream:
     to the current candlestick every second.
     '''
 
-    def __init__(self, base_asset, quote_asset='usdt', interval='1m'):
+    def __init__(self, base_asset, quote_asset='usdt', interval='1m', trading_strategy=None):
         '''
         Initialize a price stream for an asset pair.
         Parameters
@@ -22,6 +22,7 @@ class PriceStream:
         '''
         socket = self.__make_socket_uri(base_asset, quote_asset, interval)
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
+        PriceStream.trading_strategy = trading_strategy
     
     def run(self):
         self.ws.run_forever()
@@ -33,13 +34,9 @@ class PriceStream:
         logging.info('PriceStream connection closed')
 
     def on_message(ws, message):
-        logging.info('Tick received')
         json_message = json.loads(message)
         data = json_message['k']
-        o = data['o']
-        c = data['c']
-        # print('Open: {} Close: {}'.format(o,c))
-        PriceStream.handle_tick(o, c)
+        PriceStream.trading_strategy(data)
 
     def handle_tick(open, close):
         '''
