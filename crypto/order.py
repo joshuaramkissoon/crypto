@@ -41,7 +41,7 @@ class OrderExecutor:
         '''
         return float(info.get('minNotional'))
     
-    def create_order(self, side, quantity, symbol, lot_step, order_type=ORDER_TYPE_MARKET):
+    def create_order(self, side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET):
         if quantity == 'min':
             try:
                 # Get average price for symbol

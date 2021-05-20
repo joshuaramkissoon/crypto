@@ -7,7 +7,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
-config_path = 'config.yaml'
+config_path = 'config-local.yaml'
 is_live_account = True       # Set to True for live trading
 env = Environment(config_path, is_live=is_live_account)
 
