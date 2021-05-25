@@ -1,9 +1,9 @@
-from crypto import PriceStream, OrderExecutor
+from crypto import PriceStream
 
 class AlgoTrader:
-    def __init__(self, client, base_asset, quote_asset, trading_strategy, price_interval='1m'):
+    def __init__(self, client, base_asset, quote_asset, strategy, price_interval='1m'):
         self.client = client
-        self.price_stream = PriceStream(base_asset, quote_asset=quote_asset, interval=price_interval, trading_strategy=trading_strategy)
+        self.price_stream = PriceStream(base_asset, quote_asset=quote_asset, interval=price_interval, strategy=strategy, client=client)
 
     def trade(self):
         self.price_stream.run()
