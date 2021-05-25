@@ -16,10 +16,10 @@ class Strategy:
 
     def order(self, side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET):
         '''
-        Creates a
+        Creates a live order based on parameters specified.
         '''
         logging.info('Executing order: {} ({}) {} {}'.format(side, order_type, quantity, symbol))
-        # self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET)
+        self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET)
 
     def trading_strategy(self, symbol, data):
         '''
