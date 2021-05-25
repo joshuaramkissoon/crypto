@@ -11,7 +11,7 @@ class PriceStream:
     to the current candlestick every second.
     '''
 
-    def __init__(self, base_asset, quote_asset='usdt', interval='1m', trading_strategy=None):
+    def __init__(self, base_asset, quote_asset='usdt', interval='1m', strategy=None, client=None):
         '''
         Initialize a price stream for an asset pair.
         Parameters
@@ -21,8 +21,10 @@ class PriceStream:
         interval: String, interval for candlestick (minute (m), hour (h), day (d)). Defaults to 1 minute
         '''
         socket = self.__make_socket_uri(base_asset, quote_asset, interval)
+        self.symbol = base_asset.upper() + quote_asset.upper()
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
-        PriceStream.trading_strategy = trading_strategy
+        # Initialise trading strategy class with client object
+        PriceStream.strategy = strategy(client)
     
     def run(self):
         self.ws.run_forever()
@@ -34,20 +36,13 @@ class PriceStream:
         logging.info('PriceStream connection closed')
 
     def on_message(ws, message):
+        '''
+        Method called when a new price tick is received, usually every 2 seconds.
+        '''
         json_message = json.loads(message)
-        data = json_message['k']
-        PriceStream.trading_strategy(data)
-
-    def handle_tick(open, close):
-        '''
-        Implement a trading strategy here. Function params can be changed and these changed should 
-        be reflected in the on_message function body.
-        '''
-        print(open, close)
-        if open > close:
-            print('Sell')
-        else:
-            print('Buy')
+        symbol, data = json_message['s'], json_message['k']
+        # Call the trading strategy function with price data            
+        PriceStream.strategy.trading_strategy(symbol, data)
 
     def __make_socket_uri(self, base_asset, quote_asset, interval):
         symbol = base_asset.lower() + quote_asset.lower()
