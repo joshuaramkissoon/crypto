@@ -1,8 +1,7 @@
 from binance.client import Client
 from binance.enums import *
-from crypto import *
+from crypto import Environment
 from pprint import pprint
-import concurrent.futures
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
@@ -21,10 +20,8 @@ account = Account(client)
 balances = account.get_portfolio()
 pprint(balances)
 
-
 from crypto.algo import AlgoTrader
-# Create trading strategy in strategy.py and import the function below
-from crypto.strategy import trading_strategy
+from crypto.strategy import RSI, MA
 
-bot = AlgoTrader(client, 'ETH', 'USDT', trading_strategy=trading_strategy)
+bot = AlgoTrader(client, 'ETH', 'GBP', strategy=RSI)
 bot.trade()
