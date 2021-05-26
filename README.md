@@ -9,6 +9,7 @@ This project uses the Binance API to get real-time streams for cryptocurrencies 
 ## Usage
 1. Clone the repo to your local machine
 2. Install required dependencies from `requirements.txt` file
+    
     ```
     cd path/to/crypto
     pip install -r requirements.txt
