@@ -34,7 +34,7 @@ class Account:
         '''Gets the current value of a portfolio in USD.'''
         if not self.holdings:
             self.holdings = self.get_account_balances()
-        symbols = [d['asset'] + 'USDT' for d in self.holdings]
+        symbols = [d['asset'] + 'USDT' for d in self.holdings if d['asset'] != 'USDT']
         prices = Pricer(self.client).get_average_prices(symbols)
         val = 0
         for dct in self.holdings:

@@ -1,6 +1,6 @@
 from binance.client import Client
 from binance.enums import *
-from crypto import Environment
+from crypto import Environment, Account
 from pprint import pprint
 import logging
 
@@ -17,7 +17,7 @@ client = Client(api_key, secert_key, testnet = not is_live_account)
 
 # Check user balances
 account = Account(client)
-balances = account.get_portfolio()
+balances = account.get_portfolio_value()
 pprint(balances)
 
 from crypto.algo import AlgoTrader
