@@ -42,6 +42,17 @@ class OrderExecutor:
         return float(info.get('minNotional'))
     
     def create_order(self, side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET):
+        '''
+        Creates a live asset order.
+        
+        Parameters
+        ----------
+        side: Binance enum, SIDE_BUY or SIDE_SELL
+        quantity: float, quantity of base asset to order. Must satisfy filter conditions. See https://github.com/joshuaramkissoon/crypto#executing-orders for more info.
+        symbol: str, asset pair (e.g. ETHGBP, ETHUSDT)
+        lot_step: Optional float, step precision for LOT_SIZE filter
+        order_type: Binance enum
+        '''
         if quantity == 'min':
             try:
                 # Get average price for symbol
