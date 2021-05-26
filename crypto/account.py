@@ -34,13 +34,19 @@ class Account:
         '''Gets the current value of a portfolio in USD.'''
         if not self.holdings:
             self.holdings = self.get_account_balances()
-        symbols = [d['asset'] + 'USDT' for d in self.holdings if d['asset'] != 'USDT']
-        prices = Pricer(self.client).get_average_prices(symbols)
+        alts = [d['asset'] + 'USDT' for d in self.holdings if 'USD' not in d['asset']] # alt coin symbols (non USD)
+        stables = [d['asset'] for d in self.holdings if 'USD' in d['asset']] # Coins with USD like BUSD, USDT
+        prices = Pricer(self.client).get_average_prices(alts)
         val = 0
-        for dct in self.holdings:
-            amt = float(dct['free']) + float(dct['locked'])
-            price = prices[dct['asset']+'USDT']
-            val += amt*price
+        for holding in self.holdings:
+            asset = holding['asset']
+            amt = float(holding['free']) + float(holding['locked'])
+            if 'USD' in asset:
+                # stable coin, no conversion needed
+                val += amt
+            else:
+                if price := prices.get(holding['asset']+'USDT'):
+                    val += amt*price
         return round(val, 2)
 
         
