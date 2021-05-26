@@ -14,13 +14,14 @@ class Strategy:
         self.client = client
         self.account = Account(client)
         self.start_val = self.account.get_portfolio_value()
+        logging.info('Account value: ${}'.format(self.start_val))
         self.exec = OrderExecutor(client)
         self.closes = []
 
 
     def order(self, side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET):
         '''
-        Creates a live order based on parameters specified.
+        Creates a live order based on parameters specified. See OrderExecutor class for more docs.
         '''
         logging.info('Executing order: {} ({}) {} {}'.format(side, order_type, quantity, symbol))
         self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET)
@@ -62,7 +63,6 @@ class RSI(Strategy):
     RSI_PERIOD = 4
     RSI_OVERBOUGHT = 70
     RSI_OVERSOLD = 30
-    TRADE_SYMBOL = 'ETHGBP'
     TRADE_AMOUNT = 0.008
     
     def __init__(self, client):
@@ -94,7 +94,7 @@ class RSI(Strategy):
                         self.order(
                             SIDE_BUY,
                             self.TRADE_AMOUNT,
-                            self.TRADE_SYMBOL
+                            symbol
                         )
                 if last > self.RSI_OVERSOLD and last < self.RSI_OVERBOUGHT:
                     print(logging.info('Not oversold or overbought. No action taken.'))
