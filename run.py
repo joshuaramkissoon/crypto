@@ -11,9 +11,9 @@ is_live_account = True       # Set to True for live trading
 env = Environment(config_path, is_live=is_live_account)
 
 api_key = env.get_variable('api')
-secert_key = env.get_variable('secret')
+secret_key = env.get_variable('secret')
 
-client = Client(api_key, secert_key, testnet = not is_live_account)
+client = Client(api_key, secret_key, testnet = not is_live_account)
 
 # Check user balances
 account = Account(client)
@@ -23,5 +23,5 @@ pprint(balances)
 from crypto.algo import AlgoTrader
 from crypto.strategy import RSI, MA
 
-bot = AlgoTrader(client, 'ETH', 'GBP', strategy=RSI)
+bot = AlgoTrader(client, 'ETH', 'USDT', strategy=RSI)
 bot.trade()
