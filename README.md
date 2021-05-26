@@ -34,7 +34,7 @@ stream.run()
 Orders have requirements, called _filters_, that need to be satisfied for the order to be successful. More info on all filters can be found [here](https://sammchardy.github.io/binance-order-filters/). The important filters are `MIN_NOTIONAL` and `LOT_SIZE`. These filters can be found by getting the symbol info for a pair.
 
 ```python
-info = client.get_symbol_info('ETHGBP)
+info = client.get_symbol_info('ETHGBP')
 ```
 
 `MIN_NOTIONAL` defines the minimum value calculated in the quote asset for a symbol. If you are trading `ETHGBP`, the quote symbol is `GBP` and the notional value is calculated as:
