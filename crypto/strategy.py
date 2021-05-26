@@ -1,4 +1,5 @@
 from crypto.order import *
+from crypto import Account
 import logging, talib, pprint
 import numpy as np
 
@@ -11,8 +12,11 @@ class Strategy:
     '''
     def __init__(self, client):
         self.client = client
+        self.account = Account(client)
+        self.start_val = self.account.get_portfolio_value()
         self.exec = OrderExecutor(client)
         self.closes = []
+
 
     def order(self, side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET):
         '''
@@ -20,6 +24,8 @@ class Strategy:
         '''
         logging.info('Executing order: {} ({}) {} {}'.format(side, order_type, quantity, symbol))
         self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET)
+        val = self.account.get_portfolio_value()
+        logging.info('Account value: ${} \t Session profit: ${}'.format(val, val-self.start_val))
 
     def trading_strategy(self, symbol, data):
         '''
@@ -66,13 +72,12 @@ class RSI(Strategy):
         in_position = False
         is_closed, close = data['x'], data['c']
         if is_closed:
-            print('Candle closed at {}'.format(close))
+            logging.info('Candle closed at {}'.format(close))
             self.closes.append(float(close))
 
             if len(self.closes) > self.RSI_PERIOD:
                 np_closes = np.array(self.closes)
                 rsi = talib.RSI(np_closes, self.RSI_PERIOD)
-                print(rsi)
                 last = rsi[-1]
                 print('Current RSI: {}'.format(last))
 
@@ -86,6 +91,13 @@ class RSI(Strategy):
                         logging.info('Oversold but already in position, no action taken')
                     else:
                         logging.info('BUY')
+                        self.order(
+                            SIDE_BUY,
+                            self.TRADE_AMOUNT,
+                            self.TRADE_SYMBOL
+                        )
+                if last > self.RSI_OVERSOLD and last < self.RSI_OVERBOUGHT:
+                    print(logging.info('Not oversold or overbought. No action taken.'))
 
 class MA(Strategy):
     def __init__(self, client):
