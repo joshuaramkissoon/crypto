@@ -1,0 +1,7 @@
+TA_Lib==0.4.20
+python_binance==1.0.10
+numpy==1.18.5
+schedule==1.1.0
+binance==0.3
+PyYAML==5.4.1
+websocket_client==1.0.1
