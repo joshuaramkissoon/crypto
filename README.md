@@ -8,16 +8,10 @@ This project uses the Binance API to get real-time streams for cryptocurrencies 
 
 ## Usage
 1. Clone the repo to your local machine
-2. Install required dependencies
-    - python-binance
-    - websocket-client
-    - numpy
-    - PyYAML
+2. Install required dependencies from `requirements.txt` file
     ```
-    pip install python-binance
-    pip install websocket-client
-    pip install numpy
-    pip install pyyaml
+    cd path/to/crypto
+    pip install -r requirements.txt
     ```
 3. Update `config.yaml` file with your Binance API and Secret keys. Demo keys can be generated [here](https://testnet.binance.vision/).
 4. Set `is_live_account` to `True` if you want to connect to your live account and be able to live trade. Set to `False` otherwise.
