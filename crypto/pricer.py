@@ -11,7 +11,7 @@ class PriceStream:
     to the current candlestick every second.
     '''
 
-    def __init__(self, base_asset, quote_asset='usdt', interval='1m', strategy=None, client=None):
+    def __init__(self, base_asset, quote_asset='usdt', interval='1m', log_ticks=False, strategy=None, client=None):
         '''
         Initialize a price stream for an asset pair.
         Parameters
@@ -19,12 +19,20 @@ class PriceStream:
         base_asset: String, ticker for asset
         quote_asset: String, ticker for reference asset (defaults to USDT)
         interval: String, interval for candlestick (minute (m), hour (h), day (d)). Defaults to 1 minute
+        log_ticks: Bool, set to True to log close prices for every tick
+        strategy: class, algo-trading strategy (must be a subclass of Strategy)
+        client: Binance client object
         '''
         socket = self.__make_socket_uri(base_asset, quote_asset, interval)
-        self.symbol = base_asset.upper() + quote_asset.upper()
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
+        self.symbol = base_asset.upper() + quote_asset.upper()
+        PriceStream.log_ticks = log_ticks
         # Initialise trading strategy class with client object
-        PriceStream.strategy = strategy(client)
+        if strategy:
+            assert client, 'To use a strategy, PriceStream object must be initialised with a Binance Client.'
+            PriceStream.strategy = strategy(client)
+        else:
+            PriceStream.strategy = None
     
     def run(self):
         self.ws.run_forever()
@@ -32,7 +40,7 @@ class PriceStream:
     def on_open(ws):
         logging.info('PriceStream connection opened')
 
-    def on_close(ws):
+    def on_close(ws, *args):
         logging.info('PriceStream connection closed')
 
     def on_message(ws, message):
@@ -41,8 +49,11 @@ class PriceStream:
         '''
         json_message = json.loads(message)
         symbol, data = json_message['s'], json_message['k']
+        if PriceStream.log_ticks:
+            logging.info('{} Close: {}'.format(symbol, data['c']))
         # Call the trading strategy function with price data            
-        PriceStream.strategy.trading_strategy(symbol, data)
+        if PriceStream.strategy:
+            PriceStream.strategy.trading_strategy(symbol, data)
 
     def __make_socket_uri(self, base_asset, quote_asset, interval):
         symbol = base_asset.lower() + quote_asset.lower()
@@ -66,7 +77,10 @@ class Pricer:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             res = [executor.submit(self.get_average_price, s) for s in symbols]
             for task in concurrent.futures.as_completed(res):
-                result = task.result()
-                symbol, price = result[0], float(result[1].get('price'))
-                prices[symbol] = price
+                try:
+                    result = task.result()
+                    symbol, price = result[0], float(result[1].get('price'))
+                    prices[symbol] = price
+                except Exception as e:
+                    print(e)
         return prices
