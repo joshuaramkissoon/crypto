@@ -5,7 +5,7 @@ class AlgoTrader:
     def __init__(self, client, base_asset, quote_asset, strategy, price_interval='1m'):
         self.client = client
         self.account = Account(client)
-        self.start_value = self.account.get_portfolio_value()
+        self.symbol = base_asset.upper() + quote_asset.upper()
         self.price_stream = PriceStream(
             base_asset, 
             quote_asset=quote_asset, 
@@ -15,8 +15,7 @@ class AlgoTrader:
         )
     
     def trade(self):
-        logging.info('Trading started')
-        logging.info('Account value: ${}'.format(self.start_value))
+        logging.info('Trading started for pair: {}'.format(self.symbol))
         self.price_stream.run()
 
     
