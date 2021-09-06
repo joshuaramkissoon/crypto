@@ -54,7 +54,30 @@ exec = OrderExecutor(client)
 exec.create_order(side=SIDE_BUY, quantity=0.1, symbol='ETHGBP', order_type=ORDER_TYPE_MARKET)
 ```
 
-If the order is executed, a response will be printed showing the order details.
+If the order is executed, the response will show the fill(s) for the order and other related metadata.
+
+```
+{'clientOrderId': 'X0NWa1gWz3HeuL3OLphzDQ',
+ 'cummulativeQuoteQty': '10.85634000',
+ 'executedQty': '0.00600000',
+ 'fills': [{'commission': '0.00000600',
+            'commissionAsset': 'ETH',
+            'price': '1809.39000000',
+            'qty': '0.00600000',
+            'tradeId': 10410826}],
+ 'orderId': 188166352,
+ 'orderListId': -1,
+ 'origQty': '0.00600000',
+ 'price': '0.00000000',
+ 'side': 'BUY',
+ 'status': 'FILLED',
+ 'symbol': 'ETHGBP',
+ 'timeInForce': 'GTC',
+ 'transactTime': 1622578783778,
+ 'type': 'MARKET'}
+```
+
+Note: All orders have a 0.1% commission.
 
 ### Creating a trading strategy
 A trading strategy is created by subclassing the `Strategy` class (in `strategy.py`). This base class handles logic for accessing account details and executing orders. Your implementation only needs to have a basic `__init__` and to override the `trading_strategy` method:
