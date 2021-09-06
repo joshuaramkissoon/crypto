@@ -10,12 +10,14 @@ class Strategy:
     ----------
     client - Binance Client object
     '''
-    def __init__(self, client):
+    def __init__(self, client, session, notifier):
         self.client = client
         self.account = Account(client)
         self.start_val = self.account.get_portfolio_value()
         logging.info('Account value: ${}'.format(self.start_val))
         self.exec = OrderExecutor(client)
+        self.session = session
+        self.notifier = notifier
         self.closes = []
 
 
@@ -24,9 +26,14 @@ class Strategy:
         Creates a live order based on parameters specified. See OrderExecutor class for more docs.
         '''
         logging.info('Executing order: {} ({}) {} {}'.format(side, order_type, quantity, symbol))
-        self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET)
-        val = self.account.get_portfolio_value()
-        logging.info('Account value: ${} \t Session profit: ${}'.format(val, val-self.start_val))
+        if (order := self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=order_type)):    
+            self.session.handle_order(order)
+            update_msg = 'Order Executed: {} ({}) {} {}'.format(side, order_type, quantity, symbol)
+        else:
+            update_msg = 'Order Execution Failed: {} ({}) {} {}'.format(side, order_type, quantity, symbol)
+            logging.info(update_msg)
+        self.notifier.update(update_msg)
+
 
     def trading_strategy(self, symbol, data):
         '''
@@ -60,16 +67,16 @@ class Strategy:
 class RSI(Strategy):
     '''Simple implementation of RSI(14) to test end to end algo trading functionality'''
 
-    RSI_PERIOD = 4
+    RSI_PERIOD = 14
     RSI_OVERBOUGHT = 70
     RSI_OVERSOLD = 30
-    TRADE_AMOUNT = 0.008
+    TRADE_AMOUNT = 0.004
     
-    def __init__(self, client):
-        super().__init__(client)
+    def __init__(self, client, session, notifier):
+        self.in_position = False
+        super().__init__(client, session, notifier)
 
     def trading_strategy(self, symbol, data):
-        in_position = False
         is_closed, close = data['x'], data['c']
         if is_closed:
             logging.info('Candle closed at {}'.format(close))
@@ -79,23 +86,30 @@ class RSI(Strategy):
                 np_closes = np.array(self.closes)
                 rsi = talib.RSI(np_closes, self.RSI_PERIOD)
                 last = rsi[-1]
-                print('Current RSI: {}'.format(last))
+                # print('Current RSI: {}'.format(last))
 
                 if last > self.RSI_OVERBOUGHT:
-                    if in_position:
-                        logging.info('SELL')
+                    if self.in_position:
+                        logging.info('-----------SELL-------------')
+                        self.order(
+                            SIDE_SELL,
+                            self.TRADE_AMOUNT,
+                            symbol
+                        )
+                        self.in_position = False
                     else:
                         logging.info('Overbought but not in position, no action taken')
                 if last < self.RSI_OVERSOLD:
-                    if in_position:
+                    if self.in_position:
                         logging.info('Oversold but already in position, no action taken')
                     else:
-                        logging.info('BUY')
+                        logging.info('-----------BUY-------------')
                         self.order(
                             SIDE_BUY,
                             self.TRADE_AMOUNT,
                             symbol
                         )
+                        self.in_position = True
                 if last > self.RSI_OVERSOLD and last < self.RSI_OVERBOUGHT:
                     print(logging.info('Not oversold or overbought. No action taken.'))
 

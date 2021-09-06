@@ -1,34 +1,65 @@
 import yaml
+import logging
+from enum import Enum
 
 class Environment:
-    '''
-    Loads environment from a config file with format:
-    binance-live:
-        api-key: ...
-        secret-key: ...
-    binance-test:
-        api-key: ...
-        secret-key: ...
-    '''
+    '''Loads environment variables from a config file.'''
+    class Constants(Enum):
+        BINANCE_LIVE_KEY = 'binance-live'
+        BINANCE_DEMO_KEY = 'binance-test'
+        IS_LIVE_ACCOUNT_KEY = 'is-live-account'
+        CONFIG_PATH_KEY = 'config-path'
+        DEFAULT_CONFIG_PATH = 'config.yaml'
+        TELEGRAM_KEY = 'telegram'
 
-    BINANCE_LIVE = 'binance-live'
-    BINANCE_DEMO = 'binance-test'
+    config = None
 
-    def __init__(self, path, is_live):
-        self.is_live = is_live
-        with open(path, 'r') as stream:
-            try:
-                self.config = yaml.safe_load(stream)
-            except Exception as e:
-                print('Could not load config file: ', e)
+    def __init__(self, path='config.yaml'):
+        constants = self.Constants
+        self.config = self.load_file(path)
+        self.is_live = self.get_root_variable(constants.IS_LIVE_ACCOUNT_KEY.value)
+        if (config_path := self.get_root_variable(constants.CONFIG_PATH_KEY.value)) != constants.DEFAULT_CONFIG_PATH.value:
+            self.config = self.load_file(config_path)
 
-    def get_variable(self, var):
+    def load_file(self, path: str) -> dict:
+        '''Load yaml file from path.'''
+        try:
+            with open(path, 'r') as stream:
+                return yaml.safe_load(stream)
+        except Exception as e:
+            raise Exception(f'Could not load config file: {str(e)}')
+
+    def _get(self, var: str):
+        '''Get a variable by key from the config file loaded.'''
+        if not self.config:
+            raise Exception('No configuration file found.')
+        return self.config.get(var)
+    
+    def get_binance_key(self, key_type: str):
         '''
-        Returns an environment variable.
+        Returns a Binance API or Secret key.
         Parameters
         ----------
         var: String. Options: "api", "secret"
         '''
-        assert self.config is not None
-        parent_var = self.BINANCE_LIVE if self.is_live else self.BINANCE_DEMO
-        return self.config.get(parent_var).get(var+'-key')
+        if key_type == 'api' or key_type == 'secret':
+            parent_var = self.Constants.BINANCE_LIVE_KEY if self.is_live else self.Constants.BINANCE_DEMO_KEY
+            return self._get(parent_var.value).get(key_type+'-key')
+        raise Exception(f'Invalid binance key type: {key_type}')
+
+    def get_root_variable(self, var: str):
+        '''
+        Returns a root environment variable.
+        Parameters
+        ----------
+        var: String. Key of variable
+        '''
+        if _var := self._get(var):
+            return _var
+        raise Exception(f'Variable {var} not found in config file.')
+
+    def get_telegram_key(self):
+        tg = self.get_root_variable(self.Constants.TELEGRAM_KEY.value)
+        if _var := tg.get('api-key'):
+            return _var
+        raise Exception(f'Telegram key not found in config file.')

@@ -1,27 +1,17 @@
 from binance.client import Client
 from binance.enums import *
-from crypto import Environment, Account
+from crypto import Environment, Account, OrderExecutor
+from crypto.mobile import MobileClient
 from pprint import pprint
 import logging
+import time
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
-config_path = 'config-local.yaml'
-is_live_account = True       # Set to True for live trading
-env = Environment(config_path, is_live=is_live_account)
+env = Environment()
+api_key = env.get_binance_key('api')
+secret_key = env.get_binance_key('secret')
 
-api_key = env.get_variable('api')
-secret_key = env.get_variable('secret')
+client = Client(api_key, secret_key, testnet = not env.is_live)
 
-client = Client(api_key, secret_key, testnet = not is_live_account)
-
-# Check user balances
-account = Account(client)
-balances = account.get_portfolio_value()
-pprint(balances)
-
-from crypto.algo import AlgoTrader
-from crypto.strategy import RSI, MA
-
-bot = AlgoTrader(client, 'ETH', 'USDT', strategy=RSI)
-bot.trade()
+MobileClient(client).start()

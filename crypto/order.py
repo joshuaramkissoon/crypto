@@ -70,5 +70,7 @@ class OrderExecutor:
                 quantity=quantity if quantity != 'min' else min_qty
             )
             pprint(order)
+            return order
         except Exception as e:
             print('Order not executed: ', e)
+            return False

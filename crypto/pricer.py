@@ -2,6 +2,7 @@ import websocket
 import json
 from crypto.constants import SOCKET_BASE
 import concurrent.futures
+import threading
 from pprint import pprint
 import logging
 
@@ -11,7 +12,7 @@ class PriceStream:
     to the current candlestick every second.
     '''
 
-    def __init__(self, base_asset, quote_asset='usdt', interval='1m', log_ticks=False, strategy=None, client=None):
+    def __init__(self, base_asset, quote_asset='usdt', interval='1m', log_ticks=False, strategy=None, session=None, notifier=None, client=None, close_callback=None):
         '''
         Initialize a price stream for an asset pair.
         Parameters
@@ -27,20 +28,27 @@ class PriceStream:
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
         self.symbol = base_asset.upper() + quote_asset.upper()
         PriceStream.log_ticks = log_ticks
+        PriceStream.close_callback = close_callback
         # Initialise trading strategy class with client object
         if strategy:
             assert client, 'To use a strategy, PriceStream object must be initialised with a Binance Client.'
-            PriceStream.strategy = strategy(client)
+            PriceStream.strategy = strategy(client, session, notifier)
         else:
             PriceStream.strategy = None
     
     def run(self):
-        self.ws.run_forever()
+        wst = threading.Thread(target=self.ws.run_forever)
+        wst.daemon = True
+        wst.start()
+
+    def stop(self):
+        self.ws.close()
     
     def on_open(ws):
         logging.info('PriceStream connection opened')
 
     def on_close(ws, *args):
+        PriceStream.close_callback()
         logging.info('PriceStream connection closed')
 
     def on_message(ws, message):
