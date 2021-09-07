@@ -1,5 +1,5 @@
 from crypto.order import *
-from crypto import Account
+from crypto.account import Account
 import logging, talib, pprint
 import numpy as np
 
