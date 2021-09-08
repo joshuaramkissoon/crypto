@@ -73,15 +73,15 @@ class MobileClient:
 class TelegramNotifier:
 
     INFO_MESSAGE = '''
-        Crypto Trading Bot:\n\nStart Trading:
-        - Use /start command
-        - Provide parameters delim by space as key:value\n\nParameters needed: 
-        - Base asset (key: base) (base:ETH)
-        - Quote asset (key: quote) (quote:GBP)
-        - Strategy (key: strategy) (strategy:RSI)
-        - Code (key: code) (code:1111)\n\nExample:
-        /start base:ETH quote:GBP strategy:RSI code:1111\n\nStop Trading:
-        - Text "stop"
+        *Crypto Trading Bot:*\n\n*Start Trading*:
+Use the /start command and provide parameters separated by spaces as _key:value_ to start trading. The *strategy* parameter is case-sensitive and must correspond to a class in the `strategy.py` module. Your *access code* will be shown when you start a `MobileClient` object from your Python script.\n\n_Parameters needed:_ 
+        • Base asset (key: base) (base:ETH)
+        • Quote asset (key: quote) (quote:GBP)
+        • Strategy (key: strategy) (strategy:RSI)
+        • Access Code (key: code) (code:1111)\n\n_Example:_
+        /start base:ETH quote:GBP strategy:RSI code:1111\n\n*Stop Trading:*
+        • Text *Stop* to stop trading.\n\n*Get a Trading Update:*
+        • Text *Update* to get information about the current trading session like net profit, trades placed etc. 
     '''
 
     def __init__(self, api_key, mobile_client):
@@ -90,10 +90,11 @@ class TelegramNotifier:
         self._provide_access_code()
         TelegramNotifier.bot = telegram.Bot(token=api_key)
         self.setup_handlers(api_key)
+        self.parse_mode = telegram.ParseMode.MARKDOWN
 
     def _provide_access_code(self):
         self.unique_key = TGHelpers.generate_key()
-        logging.info(f'Unique access code: {self.unique_key}. Provide this when executing a \\start command. Text \\info to CryptoBot to find out how to use the \\start command.')
+        logging.info(f'Unique access code: {self.unique_key}. Provide this when executing a /start command. Text /info to CryptoBot to find out how to use the /start command.')
     
     # Decorators
 
@@ -113,7 +114,7 @@ class TelegramNotifier:
         def wrapper(self, update, context):
             chat_id = update['message']['chat']['id']
             if not self.mobile_client.is_running or chat_id != self.user_id:
-                context.bot.send_message(chat_id=update.effective_chat.id, text='No trading session in progress.')
+                context.bot.send_message(chat_id=update.effective_chat.id, text='No trading session in progress.', parse_mode=self.parse_mode)
             else:
                 func(self, update, context)
         return wrapper
@@ -150,9 +151,9 @@ class TelegramNotifier:
         except Exception as e:
             context.bot.send_message(chat_id=update.effective_chat.id, text=f'Trading not started: {e}')
 
-    def info_handler(update, context):
+    def info_handler(self, update, context):
         '''Handler for info command.'''
-        context.bot.send_message(chat_id=update.effective_chat.id, text=TelegramNotifier.INFO_MESSAGE)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=TelegramNotifier.INFO_MESSAGE, parse_mode=self.parse_mode)
         
     @active_required
     @authorised
