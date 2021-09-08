@@ -54,7 +54,7 @@ class Environment:
         ----------
         var: String. Key of variable
         '''
-        if _var := self._get(var):
+        if (_var := self._get(var)) is not None:
             return _var
         raise Exception(f'Variable {var} not found in config file.')
 
