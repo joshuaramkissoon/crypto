@@ -52,6 +52,10 @@ class OrderExecutor:
         symbol: str, asset pair (e.g. ETHGBP, ETHUSDT)
         lot_step: Optional float, step precision for LOT_SIZE filter
         order_type: Binance enum
+
+        Throws
+        ------
+        Throws Exception if order creation not successful. Must be handled by caller.
         '''
         if quantity == 'min':
             try:
@@ -62,15 +66,11 @@ class OrderExecutor:
                 print(min_qty, min_qty*float(price))
             except Exception as e:
                 print('Order not executed: ', e)
-        try:
-            order = self.client.create_order(
-                symbol=symbol,
-                side=side,
-                type=order_type,
-                quantity=quantity if quantity != 'min' else min_qty
-            )
-            pprint(order)
-            return order
-        except Exception as e:
-            print('Order not executed: ', e)
-            return False
+        order = self.client.create_order(
+            symbol=symbol,
+            side=side,
+            type=order_type,
+            quantity=quantity if quantity != 'min' else min_qty
+        )
+        pprint(order)
+        return order
