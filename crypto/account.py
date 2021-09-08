@@ -26,6 +26,10 @@ class Account:
         else:
             self.holdings = list(filter(lambda d: float(d['free']) + float(d['locked']) != 0, self.balances))
             return self.holdings
+
+    def show_account_balances(self, include_zero=False):
+        '''Prints balances for an account.'''
+        pprint(self.get_account_balances(include_zero=include_zero))
     
     def get_portfolio(self):
         return self.get_account_balances()
