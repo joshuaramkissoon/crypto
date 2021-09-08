@@ -1,5 +1,6 @@
 import pytest
 from crypto.helpers import get_strategy, currency, format_runtime
+from crypto.session import SessionTracker
 from crypto.strategy import RSI, MA
 from crypto.mobile import TGHelpers
 
@@ -74,3 +75,8 @@ def test_parse_start_parts_invalid_params(input):
     with pytest.raises(Exception) as e:
         TGHelpers.parse_start_parts(input.split(' '))
         assert str(e) == 'Invalid parameter format. Run /info for more info on how to provide parameters.'
+
+def test_session_tracker_get_average_price(session, order_fills_1):
+    for case in order_fills_1:
+        fills, expected_avg = case['fills'], case['average_price']
+        assert session.get_average_price(fills) == pytest.approx(expected_avg)

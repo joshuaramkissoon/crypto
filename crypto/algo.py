@@ -1,7 +1,7 @@
 from crypto.pricer import PriceStream
 from crypto.account import Account
 from crypto.environment import Environment
-from crypto.helpers import SessionTracker
+from crypto.session import SessionTracker
 import crypto.strategy
 import logging, schedule
 
