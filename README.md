@@ -1,5 +1,16 @@
-# Crypto Trading
-This project uses the Binance API to get real-time streams for cryptocurrencies and make trades.
+# Crypto Algo Trading
+
+This library can be used to create, run and monitor algorithmic trading strategies for cryptocurrencies.
+It can be linked to a user's Binance account and allows for order execution in live and test environments.
+
+## Key Features
+
+- Stream real-time prices of asset-pairs
+- Execute live buy or sell orders
+- Implement a trading strategy and run an `AlgoTrader` using this strategy
+- Receive trading alerts with Telegram
+    - Order execution
+- Dynamic remote trading using a Telegram Bot
 
 ## Pre-requisites
 - Python 3
@@ -138,3 +149,8 @@ It is initialised with a `Client` object, base and quote asset symbols and a cla
 bot = AlgoTrader(client, 'ETH', 'USDT', strategy=MovingAverage)
 bot.trade()
 ```
+
+### Remote Trading using Telegram
+
+The `MobileClient` can be used to manage trading remotely by speaking to a Telegram Bot. Trading can be started using a particular strategy
+and different commands can be used to control the trading session.
