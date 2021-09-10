@@ -184,12 +184,24 @@ Your `access code` will be shown when you start a `MobileClient` object from you
 ```
 
 This will start trading `ETH/GBP` using the user's `RSI` strategy. The code provided registers the trading session to the correct user, ensuring no
-other users can get access to this session.
+other users can get access to this session. Alerts will be sent when orders are executed successfully and if they fail.
+
+**Order Executed Alert:**
+
+```
+Order Executed:
+Pair Symbol: ETHUSDT
+Side: BUY
+Order Type: MARKET
+Quantity: 0.005
+Average Execution Price: £2278.83
+Net Trade Spend: £11.39
+```
 
 #### Stop Trading
 
-Text `/stop` to `CryptoBot` to stop trading. A summary of the trading session will be sent back to you.
+Text `stop` to `CryptoBot` to stop trading. A summary of the trading session will be sent back to you.
 
 #### Update Trading
 
-Text `/update` to `CryptoBot` to get an update on the trading session. Net profit, number of trades placed etc. will be sent back to you.
+Text `update` to `CryptoBot` to get an update on the trading session. Net profit, number of trades placed etc. will be sent back to you.
