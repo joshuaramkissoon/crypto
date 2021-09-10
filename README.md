@@ -190,7 +190,7 @@ other users can get access to this session. Alerts will be sent when orders are 
 
 ```
 Order Executed:
-Pair Symbol: ETHUSDT
+Pair Symbol: ETH/GBP
 Side: BUY
 Order Type: MARKET
 Quantity: 0.005
