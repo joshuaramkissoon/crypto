@@ -153,4 +153,43 @@ bot.trade()
 ### Remote Trading using Telegram
 
 The `MobileClient` can be used to manage trading remotely by speaking to a Telegram Bot. Trading can be started using a particular strategy
-and different commands can be used to control the trading session.
+and different commands can be used to control the trading session. The bot's username is `@jkmr_crypto_bot`.
+
+```python3
+# Control or manage trading by texting the CryptoBot
+MobileClient(client).start()
+```
+
+#### How to use the bot
+
+You can find information on how to use the bot below or text `/info` to `CryptoBot`.
+
+#### Start Trading
+
+Use the `/start` command in the telegram chat and provide parameters separated by spaces as `key:value` to start trading. 
+The `strategy` parameter is case-sensitive and must correspond to a class in the `strategy.py` module. This must also be under `strategy` in `config.yaml`. 
+Your `access code` will be shown when you start a `MobileClient` object from your Python script.
+
+**Parameters needed:**
+
+- **Base Asset** (key: `base`) (E.g. `base:ETH`)
+- **Quote asset** (key: `quote`) (E.g. `quote:GBP`)
+- **Strategy** (key: `strategy`) (E.g. `strategy:RSI`)
+- **Access Code** (key: `code`) (E.g. `code:1111`)
+
+**Example:**
+
+```
+/start base:ETH quote:GBP strategy:RSI code:1111
+```
+
+This will start trading `ETH/GBP` using the user's `RSI` strategy. The code provided registers the trading session to the correct user, ensuring no
+other users can get access to this session.
+
+#### Stop Trading
+
+Text `/stop` to `CryptoBot` to stop trading. A summary of the trading session will be sent back to you.
+
+#### Update Trading
+
+Text `/update` to `CryptoBot` to get an update on the trading session. Net profit, number of trades placed etc. will be sent back to you.
