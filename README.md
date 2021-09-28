@@ -91,7 +91,8 @@ If the order is executed, the response will show the fill(s) for the order and o
 Note: All orders have a 0.1% commission.
 
 ### Creating a trading strategy
-A trading strategy is created by subclassing the `Strategy` class (in `strategy.py`). This base class handles logic for accessing account details and executing orders. Your implementation only needs to have a basic `__init__` and to override the `trading_strategy` method:
+
+Create a trading strategy by subclassing the `Strategy` class (in `strategy.py`). This base class handles logic for accessing account details and executing orders. Your implementation only needs to have a basic `__init__` and to override the `trading_strategy` method:
 
 ```python3
 class MovingAverage(Strategy):
@@ -138,12 +139,11 @@ data: {
 }
 ```
 
-There's no need to override the `order` method from the base `Strategy` class.
+In the implementation of the `trading_strategy` method, buy or sell orders can be created using the base class' `order()` method. This method takes a `side`, `amount` and `symbol`, handles the execution of the order and updates the current trading session or handles exceptions if the order wasn't executed successfully. There's no need to override the `order` method from the base `Strategy` class.
 
 ### Implementing a trading strategy
-The `AlgoTrader` class can be used to run a trading strategy. It opens a real-time stream of price data for an asset pair and a user-defined class handles the price data received on every tick, deciding whether to make a trade or not. 
 
-It is initialised with a `Client` object, base and quote asset symbols and a class implementation of a trading strategy. Start trading by calling the `trade` method.
+After creating a strategy, the `AlgoTrader` class can be used to run it. The `AlgoTrader` opens a real-time stream of price data for an asset pair and the strategy handles incoming tick data. It is initialised with a `Client` object, base and quote asset symbols and a trading strategy class. Start trading by calling the `trade` method.
 
 ```python3
 bot = AlgoTrader(client, 'ETH', 'USDT', strategy=MovingAverage)
@@ -152,7 +152,7 @@ bot.trade()
 
 ### Remote Trading using Telegram
 
-The `MobileClient` can be used to manage trading remotely by speaking to a Telegram Bot. Trading can be started using a particular strategy
+The `MobileClient` can be used to manage remote trading by speaking to a Telegram Bot. Trading can be started using a particular strategy
 and different commands can be used to control the trading session. The bot's username is `@jkmr_crypto_bot`.
 
 ```python3
@@ -205,3 +205,24 @@ Text `stop` to `CryptoBot` to stop trading. A summary of the trading session wil
 #### Update Trading
 
 Text `update` to `CryptoBot` to get an update on the trading session. Net profit, number of trades placed etc. will be sent back to you.
+
+#### Querying an Account
+
+Queries can be sent to `CryptoBot` to get account information. Each query must contain the authentication code. 
+There are two types of queries that can be used:
+
+- **Amount** - Used to get the amount or balance of an asset in a user's wallet
+
+```
+/query amount:ETH code:1111
+```
+
+The bot will respond with the balance of `ETH` in the current user's wallet: the `free` and `locked` amount.
+
+- **Value** - Used to get the value of an asset in a specific currency
+
+```
+/query value:ETH/GBP code:1111
+```
+
+The response will be the value of the user's `free` and `locked` `ETH` holdings in `GBP`.
