@@ -3,13 +3,13 @@ from crypto.account import Account
 from crypto.environment import Environment
 from crypto.session import SessionTracker
 import crypto.strategy
-import logging, schedule
+import logging, schedule, threading
 
 class AlgoTrader:
-    def __init__(self, client, base_asset, quote_asset, strategy, price_interval='1m', log_ticks=False, notifier=None):
+    def __init__(self, client, base_asset, quote_asset, strategy, price_interval='1m', log_ticks=False, notifier=None, account=None):
         self.client = client
         self.session = SessionTracker()
-        self.account = Account(client)
+        self.account = account if account else Account(client)
         self.symbol = base_asset.upper() + quote_asset.upper()
         self.price_stream = PriceStream(
             base_asset, 
@@ -25,7 +25,10 @@ class AlgoTrader:
     
     def trade(self):
         logging.info('Trading started for pair: {}'.format(self.symbol))
+        self.start_val = self.account.get_portfolio_value()
+        logging.info('Account value: ${}'.format(self.start_val))
         self.price_stream.run()
+        
 
     def stop(self):
         self.price_stream.stop()

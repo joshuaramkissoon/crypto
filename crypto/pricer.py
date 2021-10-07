@@ -5,6 +5,12 @@ import concurrent.futures
 import threading
 from pprint import pprint
 import logging
+from enum import Enum
+from datetime import datetime
+
+class StreamType(Enum):
+    KLINE = 0
+    ORDER_BOOK = 1
 
 class PriceStream:
     '''
@@ -12,7 +18,7 @@ class PriceStream:
     to the current candlestick every second.
     '''
 
-    def __init__(self, base_asset, quote_asset='usdt', interval='1m', log_ticks=False, strategy=None, session=None, notifier=None, client=None, close_callback=None):
+    def __init__(self, base_asset, quote_asset='usdt', interval='1m', log_ticks=False, strategy=None, session=None, notifier=None, client=None, close_callback=None, stream_type=StreamType.KLINE):
         '''
         Initialize a price stream for an asset pair.
         Parameters
@@ -24,7 +30,7 @@ class PriceStream:
         strategy: class, algo-trading strategy (must be a subclass of Strategy)
         client: Binance client object
         '''
-        socket = self.__make_socket_uri(base_asset, quote_asset, interval)
+        socket = self.__make_socket_uri(stream_type, base_asset, quote_asset, interval)
         self.ws = websocket.WebSocketApp(socket, on_open=PriceStream.on_open, on_close=PriceStream.on_close, on_message=PriceStream.on_message)
         self.symbol = base_asset.upper() + quote_asset.upper()
         PriceStream.log_ticks = log_ticks
@@ -37,19 +43,21 @@ class PriceStream:
             PriceStream.strategy = None
     
     def run(self):
-        wst = threading.Thread(target=self.ws.run_forever)
-        wst.daemon = True
-        wst.start()
+        _thread = threading.Thread(target=self.ws.run_forever)
+        _thread.start()
 
     def stop(self):
         self.ws.close()
     
     def on_open(ws):
         logging.info('PriceStream connection opened')
+        
 
     def on_close(ws, *args):
-        PriceStream.close_callback()
+        if PriceStream.close_callback:
+            PriceStream.close_callback()
         logging.info('PriceStream connection closed')
+
 
     def on_message(ws, message):
         '''
@@ -63,9 +71,16 @@ class PriceStream:
         if PriceStream.strategy:
             PriceStream.strategy.trading_strategy(symbol, data)
 
-    def __make_socket_uri(self, base_asset, quote_asset, interval):
+    
+    def __make_socket_uri(self, stream_type: StreamType, base_asset: str, quote_asset: str, interval=None):
         symbol = base_asset.lower() + quote_asset.lower()
-        return SOCKET_BASE + '/ws/{}@kline_{}'.format(symbol, interval)
+        if stream_type == StreamType.KLINE:
+            if not interval:
+                raise Exception('KLine stream needs an interval')
+            return SOCKET_BASE + '/ws/{}@kline_{}'.format(symbol, interval)
+        if stream_type == StreamType.ORDER_BOOK:
+            return SOCKET_BASE + '/ws/{}@bookTicker'.format(symbol)
+
 
 class Pricer:
     def __init__(self, client):

@@ -12,9 +12,6 @@ class Strategy:
     '''
     def __init__(self, client, session, notifier):
         self.client = client
-        self.account = Account(client)
-        self.start_val = self.account.get_portfolio_value()
-        logging.info('Account value: ${}'.format(self.start_val))
         self.exec = OrderExecutor(client)
         self.session = session
         self.notifier = notifier
@@ -23,22 +20,25 @@ class Strategy:
     def _create_order_message(self, side, order_type, quantity, symbol, order_result_dict):
         '''Formats a message update to user about successful order execution.'''
         avg, net = order_result_dict['average_price'], order_result_dict['net']
-        s = f'Order Executed:\nPair Symbol: {symbol}\nSide: {side}\nOrder Type: {order_type}\nQuantity: {quantity}\nAverage Execution Price: {avg}\nNet Trade Spend: {net}'
+        s = f'*Order Executed:*\nPair Symbol: {symbol}\nSide: {side}\nOrder Type: {order_type}\nQuantity: {quantity}\nAverage Execution Price: {avg}\nNet Trade Spend: {net}'
         return s
 
     def order(self, side, quantity, symbol, lot_step=None, order_type=ORDER_TYPE_MARKET):
         '''
         Creates a live order based on parameters specified. See OrderExecutor class for more docs.
         '''
+        is_successful = False
         logging.info('Executing order: {} ({}) {} {}'.format(side, order_type, quantity, symbol))
         try:
             order = self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=order_type)
             order_result = self.session.handle_order(order)
             update_msg = self._create_order_message(side, order_type, quantity, symbol, order_result)
+            is_successful = True
         except Exception as e:
             update_msg = 'Order Execution Failed: {} ({}) {} {}\nError: {}'.format(side, order_type, quantity, symbol, str(e))
-            logging.info(update_msg)
-        self.notifier.update(update_msg)
+        logging.info(update_msg)
+        if self.notifier:
+            self.notifier.update(update_msg, parse_markdown=is_successful)
 
 
     def trading_strategy(self, symbol, data):

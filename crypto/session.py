@@ -59,7 +59,7 @@ class SessionTracker:
         return (1-0.01*commission_percent)*value
 
     def get_session_info(self):
-        logging.info('Session runtime: {} seconds'.format(self.get_session_runtime()))
+        logging.info('Session runtime: {}'.format(self.get_session_runtime()))
         logging.info('Profit for session: {}'.format(self.profit))
 
     def get_session_runtime(self):

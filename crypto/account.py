@@ -10,7 +10,14 @@ class Account:
     def get_account(self):
         return self.client.get_account()
 
-    def get_asset_balance(self, asset):
+    def get_asset_balance(self, asset: str):
+        '''
+        Get a user's balance for a given asset.
+        
+        Returns
+        -------
+        Dictionary or None if not found
+        '''
         return self.client.get_asset_balance(asset=asset)
 
     def get_account_balances(self, include_zero=False):
