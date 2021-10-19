@@ -2,14 +2,54 @@
 Module that handles notifications for alerts. Currently supporting Telegram.
 '''
 import logging
-import random
 import telegram
 from telegram.ext import MessageHandler, Filters, Updater, CommandHandler
-from crypto.algo import AlgoTrader
 import crypto.strategy
 from crypto.environment import Environment
+from crypto.helpers import TelegramHelpers
 
 class Notifier:
+
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.bot = telegram.Bot(token=self.api_key)
+        self.chat_id = None
+    
+    @property
+    def is_auth(self):
+        return self.chat_id is not None
+
+    def _auth(self):
+        self._provide_access_code()
+        self._setup_handlers(self.api_key)
+
+    def _provide_access_code(self):
+        self.unique_key = TelegramHelpers.generate_key()
+        logging.info(f'Unique access code: {self.unique_key}. Text CryptoBot (@jkmr_crypto_bot) using the \auth:code command to authorize this chat for trading notifications. This action blocks the main thread.')
+
+    def _setup_handlers(self, api_key):
+        '''Setup message handlers.'''
+        updater = Updater(token=api_key, use_context=True)
+        # Auth handler
+        auth_handler = CommandHandler('auth', self._auth_handler)
+        updater.dispatcher.add_handler(auth_handler)
+        updater.start_polling()
+
+    def _auth_handler(self, update, context):
+        if int(update.message.text.split(':')[-1]) == self.unique_key:
+            # Authorised
+            self.chat_id = update['message']['chat']['id']
+            context.bot.send_message(chat_id=update.effective_chat.id, text='Chat authorised to listen to trading session.')
+        else:
+            context.bot.send_message(chat_id=update.effective_chat.id, text='Invalid code.')
+
+    def update(self, message, parse_markdown=True):
+        if self.is_auth:
+            self.bot.send_message(text=message,chat_id=self.chat_id, parse_mode=telegram.ParseMode.MARKDOWN if parse_markdown else None)
+        else:
+            logging.warn('Could not update client. Notifier object has no chat ID.')
+
+class _Notifier:
 
     INFO_MESSAGE = '''
         Crypto Trading Bot:\n\nStart Trading:

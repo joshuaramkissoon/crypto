@@ -2,7 +2,7 @@ import pytest
 from crypto.helpers import get_strategy, currency, format_runtime
 from crypto.session import SessionTracker
 from crypto.strategy import RSI, MA
-from crypto.mobile import TGHelpers
+from crypto.helpers import TelegramHelpers
 
 @pytest.mark.parametrize(
     'strategy_str,strategy',
@@ -56,12 +56,12 @@ def test_parse_start_parts_valid():
         'strategy': 'rsi',
         'code': '9999'
     }
-    assert TGHelpers.parse_start_parts(input.split(' ')) == expected
+    assert TelegramHelpers.parse_start_parts(input.split(' ')) == expected
 
 def test_parse_start_parts_insufficient_params():
     input = '/start base:eth quote:usdt strategy:rsi'
     with pytest.raises(Exception) as e:
-        TGHelpers.parse_start_parts(input.split(' '))
+        TelegramHelpers.parse_start_parts(input.split(' '))
         assert str(e) == 'Insufficient parameters provided. Run /info for more info on how to start trading.'
 
 @pytest.mark.parametrize(
@@ -73,10 +73,5 @@ def test_parse_start_parts_insufficient_params():
 )
 def test_parse_start_parts_invalid_params(input):
     with pytest.raises(Exception) as e:
-        TGHelpers.parse_start_parts(input.split(' '))
+        TelegramHelpers.parse_start_parts(input.split(' '))
         assert str(e) == 'Invalid parameter format. Run /info for more info on how to provide parameters.'
-
-def test_session_tracker_get_average_price(session, order_fills_1):
-    for case in order_fills_1:
-        fills, expected_avg = case['fills'], case['average_price']
-        assert session.get_average_price(fills) == pytest.approx(expected_avg)

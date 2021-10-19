@@ -1,7 +1,80 @@
 from binance.enums import *
-from crypto.constants import AssetFilter
+from crypto.constants import AssetFilter, DEFAULT_CURRENCY
+from crypto.pricer import Pricer
 import numpy as np
 from pprint import pprint
+
+class Commission:
+    def __init__(self, quantity, asset, fiat_value=None):
+        self.quantity = quantity
+        self.asset = asset
+        self.fiat_value = fiat_value
+
+class Order:
+    def __init__(self, symbol: str, side: str, fills: list, quantity: float, cum_quote_qty: float, client=None):
+        self.symbol = symbol
+        self.side = side
+        self.fills = fills
+        self.quantity = quantity
+        self.cum_quote_qty = cum_quote_qty
+        self.average_price = self.get_average_price()
+        self.client = client
+
+    def __eq__(self, other):
+        return (
+            self.symbol == other.symbol 
+            and self.side == other.side
+            and self.fills == other.fills
+            and self.quantity == other.quantity
+            and self.cum_quote_qty == other.cum_quote_qty
+        )
+
+    def get_average_price(self) -> float:
+        '''Return the average execution price of an order.'''
+        total_qty = sum([float(f['qty']) for f in self.fills])
+        fraction = lambda x: x/total_qty
+        weighted_avg = sum([fraction(float(f['qty']))*float(f['price']) for f in self.fills])
+        return round(weighted_avg, 2)
+
+    def get_total_commission(self):
+        return sum([float(f['commission']) for f in self.fills])
+        
+    # def get_commission(self):
+    #     # Don't use this function
+    #     if not self.fills:
+    #         return None
+    #     qty = sum([float(f['commission']) for f in self.fills])
+    #     commissionAsset = self.fills[0]['commissionAsset']
+    #     fiat_val = None
+    #     if self.client and commissionAsset != DEFAULT_CURRENCY:
+    #         # Convert commission asset to default currency
+    #         rate = Pricer(self.client).get_average_price(commissionAsset+DEFAULT_CURRENCY)
+    #         fiat_val = rate*qty
+    #     return Commission(qty, commissionAsset, fiat_val)
+
+    def get_asset(self):
+        if not self.fills:
+            return None
+        return self.fills[0]['commissionAsset']
+
+    def get_result(self):
+        '''
+        Returns the net after this order. Value is positive if side was SELL, negative if side was BUY.
+        It takes into account the fiat value of the commission.
+        '''
+        res = {}
+        res['side'] = self.side
+        res['asset'] = self.get_asset() # Result of order; This is the asset that you obtained
+        if self.side == 'BUY':
+            amt = sum([float(f['qty']) - float(f['commission']) for f in self.fills])
+        elif self.side == 'SELL':
+            amt = sum([float(f['qty'])*float(f['price']) - float(f['commission']) for f in self.fills])
+        else:
+            raise Exception('Invalid side')
+        res['amount'] = amt
+        return res
+
+        
 
 class OrderExecutor:
 
@@ -72,5 +145,8 @@ class OrderExecutor:
             type=order_type,
             quantity=quantity if quantity != 'min' else min_qty
         )
-        pprint(order)
-        return order
+        if (status := order.get('status')) and status == 'FILLED':
+            # Add support for partial fills
+            pprint(order)
+            return order
+        raise Exception('Order not filled')

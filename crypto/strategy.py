@@ -37,7 +37,7 @@ class Strategy:
         except Exception as e:
             update_msg = 'Order Execution Failed: {} ({}) {} {}\nError: {}'.format(side, order_type, quantity, symbol, str(e))
         logging.info(update_msg)
-        if self.notifier:
+        if self.notifier and self.notifier.is_auth:
             self.notifier.update(update_msg, parse_markdown=is_successful)
 
 
@@ -119,13 +119,71 @@ class RSI(Strategy):
                 if last > self.RSI_OVERSOLD and last < self.RSI_OVERBOUGHT:
                     print(logging.info('Not oversold or overbought. No action taken.'))
 
-class MA(Strategy):
-    def __init__(self, client):
-        super().__init__(client)
 
-    def trading_strategy(self, symbol, data):
-        print('Trading strategy from ', type(self).__name__)
-        logging.info(data['c'])
+class CMO(Strategy):
 
+    PERIOD = 8
+    TRADE_FRAC = 0.2
+    TRADE_USDT = 20
+    CAPITAL = 100 # GBP
+    OVERBOUGHT = 50
+    OVERSOLD = -50
 
+    def __init__(self, client, session, notifier):
+        super().__init__(client, session, notifier)
+        self.ups = []
+        self.downs = []
+        self.cmos = []
+        self.last_close = None
+        self.in_position = False
+
+    @property
+    def can_trade(self):
+        return len(self.ups) == self.PERIOD and len(self.downs) == self.PERIOD
     
+    def trading_strategy(self, symbol, data):
+        if data['x']:
+            # Candle closed
+            if self.last_close is None:
+                self.last_close = float(data['x'])
+                return
+            self._handle_close(float(data['c']))
+            if self.can_trade:
+                cmo = self.calculate_cmo()
+                self.cmos.append(cmo)
+                # Check cmo against overbought and oversold threshold values, buy/sell accordingly
+
+    def _handle_close(self, close: float):
+        # Check if current close is higher or lower than last close
+        direction = None
+        if close > self.last_close:
+            direction = 'up'
+        elif close < self.last_close:
+            direction = 'down'
+        else:
+            return
+        self._add_close(close, direction)
+        self.last_close = close
+
+    def calculate_cmo(self):
+        return 100*(sum(self.ups) - sum(self.downs))/(sum(self.ups) + sum(self.downs))
+
+    def _add_close(self, close: float, direction: str):
+        if len(self.ups) == self.PERIOD:
+            self.ups.pop(0)
+        if len(self.downs) == self.PERIOD:
+            self.downs.pop(0)
+        
+        _list_close = None # List that gets appended with new close
+        _list_zero = None # List that gets appended with zero
+        if direction == 'up':
+            _list_close = self.ups
+            _list_zero = self.downs
+        elif direction == 'down':
+            _list_close = self.downs
+            _list_zero = self.ups
+        else:
+            raise Exception('Invalid direction')
+        # Append new close
+        _list_close.append(close)
+        _list_zero.append(0)

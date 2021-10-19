@@ -46,6 +46,11 @@ class Environment:
             parent_var = self.Constants.BINANCE_LIVE_KEY if self.is_live else self.Constants.BINANCE_DEMO_KEY
             return self._get(parent_var.value).get(key_type+'-key')
         raise Exception(f'Invalid binance key type: {key_type}')
+    
+    def get_coinbase_keys(self):
+        api = self._get('coinbase').get('api-key')
+        secret = self._get('coinbase').get('secret-key')
+        return {'api-key': api, 'secret-key': secret}
 
     def get_root_variable(self, var: str):
         '''
@@ -59,7 +64,6 @@ class Environment:
         raise Exception(f'Variable {var} not found in config file.')
 
     def get_telegram_key(self):
-        tg = self.get_root_variable(self.Constants.TELEGRAM_KEY.value)
-        if _var := tg.get('api-key'):
-            return _var
+        if tg := self.get_root_variable(self.Constants.TELEGRAM_KEY.value):
+            return tg
         raise Exception(f'Telegram key not found in config file.')

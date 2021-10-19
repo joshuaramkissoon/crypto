@@ -1,6 +1,8 @@
 import websocket
 import json
 from crypto.constants import SOCKET_BASE
+from crypto.environment import Environment
+from binance.client import Client
 import concurrent.futures
 import threading
 from pprint import pprint
@@ -83,8 +85,16 @@ class PriceStream:
 
 
 class Pricer:
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, client=None):
+        if client:
+            self.client = client
+        else:
+            env = Environment()
+            api_key = env.get_binance_key('api')
+            secret_key = env.get_binance_key('secret')
+            self.client = Client(api_key, secret_key, testnet = not env.is_live)
+        if not self.client:
+            raise Exception('Could not initialise Pricer object with client.')
     
     def get_average_price(self, symbol: str):
         return (symbol, self.client.get_avg_price(symbol=symbol))

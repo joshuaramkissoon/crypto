@@ -1,16 +1,20 @@
-import logging
-import time
+import logging, time
 from crypto.helpers import format_runtime
+from crypto.order import Order
 
 class SessionTracker:
     '''
     Class that keeps track of an algo-trading session (Profit/Loss, positions etc.).
     '''
     
-    def __init__(self):
+    def __init__(self, client, start_fiat=0):
+        self.client = client
         self.profit = 0
         self.start_time = time.perf_counter()
         self.is_running = True
+        self.orders = []
+        self.fiat = start_fiat
+        self.crypto_amt = 0
 
     def stop(self):
         self.is_running = False
@@ -24,39 +28,38 @@ class SessionTracker:
         -------
         dict: Containing order information (average price, net spend etc.)
         '''
-        side, fills = order['side'], order['fills']
-        net = self.aggregate_fills(fills)
-        if side == 'BUY':
-            self.profit -= net
-        elif side == 'SELL':
-            self.profit += self.commission(net)
+        order = Order(
+            order['symbol'], 
+            order['side'], 
+            order['fills'], 
+            float(order['executedQty']), 
+            float(order['cummulativeQuoteQty']), 
+            client=self.client
+        )
+        self.orders.append(order)
+        order_result = order.get_result()
+        net = self.aggregate_fills(order.fills)
+        if order_result['side'] == 'BUY':
+            self.crypto_amt += order_result['amount']
+            self.fiat -= order.cum_quote_qty
+            self.profit -= order.cum_quote_qty
+        else:
+            self.fiat += order_result['amount']
+            self.crypto_amt -= order.quantity
+            commission = order.get_total_commission()
+            self.profit += (order.cum_quote_qty - commission)
+            net -= commission
         logging.info('Profit for session: {}'.format(self.profit))
         return {
-            'net': net,
-            'average_price': self.get_average_price(fills)
+            'net': net if order.side == 'SELL' else -net,
+            'average_price': order.get_average_price()
         }
 
     def aggregate_fills(self, fills: list) -> float:
         '''
         Gets the aggregate result of all the fills in an order. 
         '''
-        return round(sum([float(f['price'])*float(f['qty']) for f in fills]), 2)
-
-    def get_average_price(self, fills: list) -> float:
-        '''Return the average execution price of an order.'''
-        total_qty = sum([float(f['qty']) for f in fills])
-        fraction = lambda x: x/total_qty
-        weighted_avg = sum([fraction(float(f['qty']))*float(f['price']) for f in fills])
-        return round(weighted_avg, 2)
-
-    def commission(self, value: float, commission_percent=0.1) -> float:
-        '''
-        Calculates value after commission is subtracted.
-        Parameters
-        ----------
-        commission_percent: Percent commission to use (Default is 0.1%)
-        '''
-        return (1-0.01*commission_percent)*value
+        return sum([float(f['price'])*float(f['qty']) for f in fills])
 
     def get_session_info(self):
         logging.info('Session runtime: {}'.format(self.get_session_runtime()))
