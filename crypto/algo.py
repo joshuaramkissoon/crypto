@@ -4,7 +4,7 @@ from crypto.notifier import Notifier
 from crypto.pricer import PriceStream
 from crypto.session import SessionTracker
 from crypto.strategy import Strategy
-from crypto.helpers import currency
+from crypto.helpers import currency, TelegramHelpers
 import logging, schedule, threading
 
 class AlgoTrader:
@@ -23,6 +23,8 @@ class AlgoTrader:
         self.client = client
         self.session = SessionTracker(client)
         self.account = account if account else Account(client)
+        self.base_asset = base_asset
+        self.quote_asset = quote_asset
         self.symbol = base_asset.upper() + quote_asset.upper()
         if default_notifications and not notifier:
             # Create default Notifier
@@ -50,17 +52,42 @@ class AlgoTrader:
 
     def stop(self):
         self.price_stream.stop()
-        session_info = self._get_session_info()
-        runtime, profit, orders = str(session_info['runtime']), session_info['profit'], session_info['orders']
-        summary_msg = f'Trading Stopped:\nSession Runtime: {runtime}\nProfit: {profit}'
-        print(summary_msg)
-        print('--------Trades--------')
-        for order in orders:
-            print(f'Symbol: {order.symbol}\tSide: {order.side}\tQuantity: {order.quantity}\tAverage Price: {order.get_average_price()}')
+        self.session_info = self.get_session_info()
+        stop_msg = self._create_stop_message()
+        logging.info(stop_msg.replace('*', ''))
     
-    def _get_session_info(self):
+    def get_session_info(self):
         return {
             'profit': currency(self.session.profit),
             'runtime': self.session.get_session_runtime(),
             'orders': self.session.orders
         }
+
+    def _create_stop_message(self, markdown=False):
+        runtime, profit, orders = self.session_info['runtime'], self.session_info['profit'], self.session_info['orders']
+        summary_msg = f'*Trading Stopped*:\nSession Runtime: {runtime}\nProfit: {profit}\n\n'
+        balances_msg = self.create_balance_update_message()
+        trades_msg = None
+        if not orders:
+            trades_msg = 'No trades yet'
+        else:
+            trades_msg = '*Trades:*'
+            for i, order in enumerate(orders):
+                trades_msg += f'\n\n*{i}.* {TelegramHelpers.create_order_msg(order, markdown=markdown)}'
+        msg = summary_msg + balances_msg + trades_msg
+        return msg.replace('*', '') if not markdown else msg
+
+    def get_balance_update(self):
+        '''Return the current base and quote balances in user's account.'''
+        base_balance = self.account.get_asset_balance(self.base_asset)
+        quote_balance = self.account.get_asset_balance(self.quote_asset)
+        total_balance = lambda dct: float(dct['free']) + float(dct['locked'])
+        total_base_balance = total_balance(base_balance)
+        total_quote_balance = total_balance(quote_balance)
+        return {'base': total_base_balance, 'quote': total_quote_balance}
+
+    def create_balance_update_message(self, markdown=False):
+        balances = self.get_balance_update()
+        base_balance, quote_balance = balances['base'], balances['quote']
+        balances_msg = f'*Balances:*\n\n{self.base_asset}: {base_balance}\n{self.quote_asset}: {quote_balance}\n\n'
+        return balances_msg.replace('*', '') if not markdown else balances_msg

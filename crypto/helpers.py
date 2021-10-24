@@ -20,7 +20,7 @@ def format_runtime(t: float):
 
 def currency(c: float):
     '''Format currency.'''
-    return '£{:0,.2f}'.format(c).replace('£-', '-£')
+    return '${:0,.2f}'.format(c).replace('$-', '-$')
 
 def get_strategy(s: str):
     '''Return the Strategy subclass with name matching the string s.'''
@@ -43,6 +43,17 @@ def make_url(base, route):
 class TelegramHelpers:
 
     VALID_QUERY_TYPES = ['value', 'amount']
+
+    def create_order_msg(order, markdown=True):
+        '''Create a formatted string summary of an Order.'''
+        msg = (
+            f'*{order.symbol}*\t\t'
+            f'Side: *{order.side}*\t\t'
+            f'Qty: *{order.quantity}*\t\t'
+            f'Avg: *{order.get_average_price()}*\t\t'
+            f'Net: *{currency(order.net)}*'
+        )
+        return msg if markdown else msg.replace('*', '')
 
     def parse_start_parts(parts: list) -> dict:
         if len(parts) < 5:

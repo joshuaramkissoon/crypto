@@ -28,6 +28,7 @@ class Strategy:
         Creates a live order based on parameters specified. See OrderExecutor class for more docs.
         '''
         is_successful = False
+        error = None
         logging.info('Executing order: {} ({}) {} {}'.format(side, order_type, quantity, symbol))
         try:
             order = self.exec.create_order(side, quantity, symbol, lot_step=None, order_type=order_type)
@@ -35,10 +36,13 @@ class Strategy:
             update_msg = self._create_order_message(side, order_type, quantity, symbol, order_result)
             is_successful = True
         except Exception as e:
+            error = str(e)
+            is_successful = False
             update_msg = 'Order Execution Failed: {} ({}) {} {}\nError: {}'.format(side, order_type, quantity, symbol, str(e))
         logging.info(update_msg)
         if self.notifier and self.notifier.is_auth:
             self.notifier.update(update_msg, parse_markdown=is_successful)
+        return is_successful, order_result, error
 
 
     def trading_strategy(self, symbol, data):
@@ -119,13 +123,30 @@ class RSI(Strategy):
                 if last > self.RSI_OVERSOLD and last < self.RSI_OVERBOUGHT:
                     print(logging.info('Not oversold or overbought. No action taken.'))
 
+class MA(Strategy):
+    
+    def __init__(self, client, session, notifier):
+        self.in_position = False
+        self.count = 0
+        super().__init__(client, session, notifier)
+
+    def trading_strategy(self, symbol, data):
+        if self.count < 2:
+            success, error = self.order(SIDE_BUY, 0.006, symbol)
+            if success:
+                self.count += 1
+            else:
+                print('Error executing order: ', error)
+
+
 
 class CMO(Strategy):
 
-    PERIOD = 8
+    PERIOD = 15
     TRADE_FRAC = 0.2
     TRADE_USDT = 20
-    CAPITAL = 100 # GBP
+    TRADE_AMOUNT = 0.006
+    CAPITAL = 100 # USD
     OVERBOUGHT = 50
     OVERSOLD = -50
 
@@ -136,6 +157,7 @@ class CMO(Strategy):
         self.cmos = []
         self.last_close = None
         self.in_position = False
+        self.buy_prices = []
 
     @property
     def can_trade(self):
@@ -152,6 +174,21 @@ class CMO(Strategy):
                 cmo = self.calculate_cmo()
                 self.cmos.append(cmo)
                 # Check cmo against overbought and oversold threshold values, buy/sell accordingly
+                if cmo > self.OVERBOUGHT and self.in_position and float(data['c']) > self.buy_prices[0]:
+                    # Sell
+                    success, _, _ = self.order(SIDE_SELL, self.TRADE_AMOUNT, symbol)
+                    if success:
+                        self.in_position = False
+                        self.buy_prices.pop(0)
+                    return
+                if cmo < self.OVERSOLD and not self.in_position:
+                    # Buy
+                    success, result, _ = self.order(SIDE_BUY, self.TRADE_AMOUNT, symbol)
+                    if success:
+                        self.in_position = True
+                        self.buy_prices.append(result['average_price'])
+                    return
+
 
     def _handle_close(self, close: float):
         # Check if current close is higher or lower than last close

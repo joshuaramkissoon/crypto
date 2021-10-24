@@ -36,7 +36,6 @@ class SessionTracker:
             float(order['cummulativeQuoteQty']), 
             client=self.client
         )
-        self.orders.append(order)
         order_result = order.get_result()
         net = self.aggregate_fills(order.fills)
         if order_result['side'] == 'BUY':
@@ -50,6 +49,8 @@ class SessionTracker:
             self.profit += (order.cum_quote_qty - commission)
             net -= commission
         logging.info('Profit for session: {}'.format(self.profit))
+        order.net = net if order.side == 'SELL' else -net
+        self.orders.append(order)
         return {
             'net': net if order.side == 'SELL' else -net,
             'average_price': order.get_average_price()

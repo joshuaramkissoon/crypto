@@ -19,6 +19,7 @@ class Order:
         self.cum_quote_qty = cum_quote_qty
         self.average_price = self.get_average_price()
         self.client = client
+        self.net = None
 
     def __eq__(self, other):
         return (
@@ -39,18 +40,18 @@ class Order:
     def get_total_commission(self):
         return sum([float(f['commission']) for f in self.fills])
         
-    # def get_commission(self):
-    #     # Don't use this function
-    #     if not self.fills:
-    #         return None
-    #     qty = sum([float(f['commission']) for f in self.fills])
-    #     commissionAsset = self.fills[0]['commissionAsset']
-    #     fiat_val = None
-    #     if self.client and commissionAsset != DEFAULT_CURRENCY:
-    #         # Convert commission asset to default currency
-    #         rate = Pricer(self.client).get_average_price(commissionAsset+DEFAULT_CURRENCY)
-    #         fiat_val = rate*qty
-    #     return Commission(qty, commissionAsset, fiat_val)
+    def get_commission(self):
+        # Don't use this function
+        if not self.fills:
+            return None
+        qty = sum([float(f['commission']) for f in self.fills])
+        commissionAsset = self.fills[0]['commissionAsset']
+        fiat_val = None
+        if self.client and commissionAsset != DEFAULT_CURRENCY:
+            # Convert commission asset to default currency
+            rate = Pricer(self.client).get_average_price(commissionAsset+DEFAULT_CURRENCY)
+            fiat_val = rate*qty
+        return Commission(qty, commissionAsset, fiat_val)
 
     def get_asset(self):
         if not self.fills:

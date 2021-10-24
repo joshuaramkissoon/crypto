@@ -1,5 +1,4 @@
 import logging
-import random
 import telegram
 from telegram.ext import MessageHandler, Filters, Updater, CommandHandler
 from crypto.algo import AlgoTrader
@@ -55,7 +54,10 @@ class MobileClient:
             self.algo.trade()
             MobileClient.is_running = True
             pair = base + '/' + quote
-            update_msg = f'Session Started:\nTrading {pair} using {strategy} strategy.\nAccount Value: ${self.algo.start_val}'
+            update_msg = (
+                f'Session Started:\nTrading {pair} using {strategy} strategy.\nAccount Value: ${self.algo.start_val}\n\n'
+                f'{self.algo.create_balance_update_message(markdown=True)}'
+            )
             self.tg.update(update_msg)
         except AttributeError:
             update_msg = f'Trading not started: Strategy {strategy} not found. The strategy must be in the config file and defined in the strategy file.'
@@ -64,13 +66,7 @@ class MobileClient:
     def stop_trading(self):
         self.algo.stop()
         MobileClient.is_running = False
-        session_info = self._get_session_info()
-        runtime, profit = str(session_info['runtime']), session_info['profit']
-        summary_msg = f'Trading Stopped:\nSession Runtime: {runtime}\nProfit: {profit}'
-        self.tg.update(summary_msg)
-
-    def _get_session_info(self):
-        return {'profit': currency(self.algo.session.profit), 'runtime': self.algo.session.get_session_runtime()}
+        self.tg.update(self.algo._create_stop_message(markdown=True))
 
     def _get_asset_amount(self, asset: str) -> dict:
         if balance := self.account.get_asset_balance(asset):
@@ -219,10 +215,18 @@ Use the /start command and provide parameters separated by spaces as _key:value_
     
     def _handle_update_message(self, update, context):
         '''Provide session update.'''
-        session_info = self.mobile_client._get_session_info()
-        runtime, profit = session_info['runtime'], session_info['profit']
-        summary_msg = f'Session Update:\nRuntime: {runtime}\nProfit: {profit}'
-        context.bot.send_message(chat_id=update.effective_chat.id, text=summary_msg)
+        session_info = self.mobile_client.algo.get_session_info()
+        runtime, profit, orders = session_info['runtime'], session_info['profit'], session_info['orders']
+        summary_msg = f'*Session Update:*\nRuntime: {runtime}\nProfit: {profit}\n\n'
+        balances_msg = self.mobile_client.algo.create_balance_update_message(markdown=True)
+        trades_msg = None
+        if not orders:
+            trades_msg = 'No trades yet.'
+        else:
+            trades_msg = '*Trades:*'
+            for i, order in enumerate(orders):
+                trades_msg += f'\n\n{i}. {TelegramHelpers.create_order_msg(order, markdown=True)}'
+        context.bot.send_message(chat_id=update.effective_chat.id, text=summary_msg+balances_msg+trades_msg, parse_mode=self.parse_mode)
 
     def _handle_amount_query(self, asset: str):
         '''Respond with amount of asset in user's wallet.'''
