@@ -26,11 +26,11 @@ def test_get_invalid_strategy_throws(strategy_str):
 @pytest.mark.parametrize(
     'input,expected',
     [
-        (240, '£240.00'),
-        (-240, '-£240.00'),
-        (-240.123, '-£240.12'),
-        (240.123, '£240.12'),
-        (0, '£0.00')
+        (240, '$240.00'),
+        (-240, '-$240.00'),
+        (-240.123, '-$240.12'),
+        (240.123, '$240.12'),
+        (0, '$0.00')
     ]
 )
 def test_currency_formatter(input, expected):

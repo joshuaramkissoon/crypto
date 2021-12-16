@@ -157,7 +157,7 @@ class _Notifier:
     def handle_update_message(update, context):
         session_info = Notifier.get_session_info()
         runtime, profit = session_info['runtime'], str(session_info['profit'])
-        summary_msg = f'Session Update:\Runtime: {runtime}\nProfit: £{profit}'
+        summary_msg = f'Session Update:\Runtime: {runtime}\nProfit: ${profit}'
         context.bot.send_message(chat_id=update.effective_chat.id, text=summary_msg)
     
     def get_session_info():
