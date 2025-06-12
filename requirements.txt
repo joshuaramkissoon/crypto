@@ -5,3 +5,5 @@ schedule==1.1.0
 binance==0.3
 PyYAML==5.4.1
 websocket_client==1.0.1
+psutil==5.9.4
+dataclasses==0.6

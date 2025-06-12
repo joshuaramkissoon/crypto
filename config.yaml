@@ -14,3 +14,28 @@ config-path: config-local.yaml
 strategy:
   - RSI
   - MA
+  - CMO
+  - MeanReversionStrategy
+  - BreakoutStrategy
+  - GridTradingStrategy
+  - ArbitrageStrategy
+  - MomentumStrategy
+  - BollingerBandsStrategy
+  - MACDStrategy
+  - VolatilityBreakoutStrategy
+  - TrendFollowingStrategy
+  - ScalpingStrategy
+
+# Trading configuration
+trading:
+  default_trade_amount: 0.01
+  max_concurrent_strategies: 10
+  enable_notifications: true
+  enable_monitoring: true
+  
+# Risk management
+risk:
+  max_drawdown_percent: 15.0
+  max_position_size: 0.1
+  default_stop_loss: 0.03
+  default_take_profit: 0.06
