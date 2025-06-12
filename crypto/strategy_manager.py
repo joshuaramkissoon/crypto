@@ -79,12 +79,13 @@ class StrategyManager:
             ScalpingStrategy
         )
         from crypto.strategy import RSI, MA, CMO
+        from crypto.rl_trainer import RLStrategy
         
         strategies = [
             RSI, MA, CMO, MeanReversionStrategy, BreakoutStrategy, 
             GridTradingStrategy, ArbitrageStrategy, MomentumStrategy,
             BollingerBandsStrategy, MACDStrategy, VolatilityBreakoutStrategy,
-            TrendFollowingStrategy, ScalpingStrategy
+            TrendFollowingStrategy, ScalpingStrategy, RLStrategy
         ]
         
         for strategy_cls in strategies:
